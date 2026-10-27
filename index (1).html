@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Jurnal PKL RPL - SMKN 2 Cipatujah</title>
+<meta name="description" content="Jurnal harian Praktik Kerja Lapangan (PKL) siswa RPL SMKN 2 Cipatujah. Data tersimpan di browser (localStorage).">
+<meta name="theme-color" content="#1e3a8a">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header class="hero">
+  <div class="container">
+    <p class="school">SMK Negeri 2 Cipatujah &middot; Rekayasa Perangkat Lunak</p>
+    <h1>Jurnal PKL RPL - SMKN 2 Cipatujah</h1>
+    <dl class="identity" aria-label="Identitas siswa">
+      <div><dt>Nama</dt><dd id="id-nama">-</dd></div>
+      <div><dt>Kelas</dt><dd id="id-kelas">-</dd></div>
+      <div><dt>Tempat PKL / Instansi</dt><dd id="id-instansi">-</dd></div>
+      <div><dt>Pembimbing</dt><dd id="id-pembimbing">-</dd></div>
+      <div><dt>Periode PKL</dt><dd id="id-periode">-</dd></div>
+    </dl>
+    <div class="hero-actions no-print">
+      <button type="button" class="btn btn-light btn-sm" id="btn-profile">Ubah Identitas</button>
+      <button type="button" class="btn btn-light btn-sm" id="btn-print">Cetak Jurnal</button>
+    </div>
+  </div>
+</header>
+
+<main class="container">
+  <section class="stats" aria-label="Rekap jurnal">
+    <div class="stat"><div class="num" id="st-total">0</div><div class="lbl">Total jurnal</div></div>
+    <div class="stat"><div class="num" id="st-hari">0</div><div class="lbl">Hari tercatat</div></div>
+    <div class="stat"><div class="num" id="st-jam">0</div><div class="lbl">Total jam kegiatan</div></div>
+    <div class="stat"><div class="num" id="st-tampil">0</div><div class="lbl">Sedang ditampilkan</div></div>
+  </section>
+
+  <div class="storage-warn" id="storage-warn" role="alert">
+    Penyimpanan browser tidak tersedia (mungkin mode privat). Data hanya bertahan sampai halaman ditutup.
+  </div>
+
+  <div class="layout">
+    <!-- Form -->
+    <section class="card form-card no-print" aria-labelledby="form-title">
+      <h2 id="form-title">Tambah Jurnal Harian</h2>
+      <div class="edit-banner" id="edit-banner" hidden>Mode edit: ubah data lalu tekan <strong>Simpan Perubahan</strong>.</div>
+      <form id="journal-form" novalidate>
+        <div class="field">
+          <label for="f-date">Tanggal <span class="req">*</span></label>
+          <input type="date" id="f-date" name="date" required>
+          <p class="err" id="e-date" aria-live="polite"></p>
+        </div>
+        <div class="row2">
+          <div class="field">
+            <label for="f-start">Jam Mulai <span class="req">*</span></label>
+            <input type="time" id="f-start" name="start" required>
+            <p class="err" id="e-start" aria-live="polite"></p>
+          </div>
+          <div class="field">
+            <label for="f-end">Jam Selesai <span class="req">*</span></label>
+            <input type="time" id="f-end" name="end" required>
+            <p class="err" id="e-end" aria-live="polite"></p>
+          </div>
+        </div>
+        <div class="field">
+          <label for="f-uraian">Uraian Pekerjaan <span class="req">*</span> <span class="hint">(min. 10 karakter)</span></label>
+          <textarea id="f-uraian" name="uraian" maxlength="1000" required placeholder="Contoh: Membuat halaman login menggunakan HTML dan CSS."></textarea>
+          <p class="err" id="e-uraian" aria-live="polite"></p>
+        </div>
+        <div class="field">
+          <label for="f-hasil">Hasil / Kompetensi yang Dipelajari <span class="req">*</span> <span class="hint">(min. 5 karakter)</span></label>
+          <textarea id="f-hasil" name="hasil" maxlength="1000" required placeholder="Contoh: Memahami layout flexbox dan validasi form dasar."></textarea>
+          <p class="err" id="e-hasil" aria-live="polite"></p>
+        </div>
+        <div class="field">
+          <label for="f-kendala">Kendala <span class="hint">(opsional)</span></label>
+          <textarea id="f-kendala" name="kendala" maxlength="1000" placeholder="Tuliskan kendala jika ada."></textarea>
+          <p class="err" id="e-kendala" aria-live="polite"></p>
+        </div>
+        <div class="field">
+          <label for="f-tindak">Rencana Tindak Lanjut <span class="hint">(opsional)</span></label>
+          <textarea id="f-tindak" name="tindak" maxlength="1000" placeholder="Rencana perbaikan atau pekerjaan berikutnya."></textarea>
+          <p class="err" id="e-tindak" aria-live="polite"></p>
+        </div>
+        <div class="form-actions">
+          <button type="submit" class="btn" id="btn-submit">Simpan Jurnal</button>
+          <button type="button" class="btn btn-outline" id="btn-cancel" hidden>Batal Edit</button>
+          <button type="button" class="btn btn-outline" id="btn-reset">Kosongkan Form</button>
+        </div>
+      </form>
+    </section>
+
+    <!-- Daftar -->
+    <section class="card" aria-labelledby="list-title">
+      <h2 id="list-title">Daftar Jurnal</h2>
+
+      <div class="toolbar no-print">
+        <div class="field">
+          <label for="q">Cari jurnal</label>
+          <input type="search" id="q" placeholder="Kata kunci: uraian, hasil, kendala, tindak lanjut..." autocomplete="off">
+        </div>
+        <div class="field">
+          <label for="sort">Urutan</label>
+          <select id="sort">
+            <option value="desc">Terbaru lebih dulu</option>
+            <option value="asc">Terlama lebih dulu</option>
+          </select>
+        </div>
+      </div>
+      <div class="filters no-print" style="margin-bottom:10px">
+        <div class="field">
+          <label for="f-from">Filter: dari tanggal</label>
+          <input type="date" id="f-from">
+        </div>
+        <div class="field">
+          <label for="f-to">Filter: sampai tanggal</label>
+          <input type="date" id="f-to">
+        </div>
+      </div>
+      <p class="toolbar-note" id="filter-note" role="status"></p>
+      <p class="print-only" id="print-info"></p>
+
+      <div class="tools-row no-print">
+        <button type="button" class="btn btn-outline btn-sm" id="btn-clear-filter">Reset Pencarian &amp; Filter</button>
+        <button type="button" class="btn btn-outline btn-sm" id="btn-export">Ekspor Cadangan (JSON)</button>
+        <button type="button" class="btn btn-outline btn-sm" id="btn-import">Impor Cadangan</button>
+        <button type="button" class="btn btn-outline btn-sm" id="btn-del-dummy">Hapus Data Contoh</button>
+        <input type="file" id="file-import" accept="application/json,.json" hidden>
+      </div>
+
+      <div class="entries" id="entries" aria-live="polite"></div>
+
+      <div class="signatures print-only" aria-hidden="true">
+        <div>
+          <div>Pembimbing Instansi</div>
+          <div class="sign-space"></div>
+          <div class="sign-name" id="sign-pembimbing">&nbsp;</div>
+        </div>
+        <div>
+          <div>Siswa</div>
+          <div class="sign-space"></div>
+          <div class="sign-name" id="sign-siswa">&nbsp;</div>
+        </div>
+      </div>
+    </section>
+  </div>
+</main>
+
+<p class="footer no-print">Data tersimpan hanya di browser perangkat ini (localStorage). Gunakan Ekspor Cadangan secara berkala.</p>
+
+<!-- Modal konfirmasi -->
+<div class="modal-backdrop" id="modal-confirm" role="dialog" aria-modal="true" aria-labelledby="mc-title">
+  <div class="modal">
+    <h2 id="mc-title">Konfirmasi</h2>
+    <p id="mc-msg"></p>
+    <div class="modal-actions">
+      <button type="button" class="btn btn-outline" id="mc-cancel">Batal</button>
+      <button type="button" class="btn btn-danger" id="mc-ok">Ya, Hapus</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal identitas -->
+<div class="modal-backdrop" id="modal-profile" role="dialog" aria-modal="true" aria-labelledby="mp-title">
+  <div class="modal wide">
+    <h2 id="mp-title">Ubah Identitas Siswa</h2>
+    <p>Data awal hanyalah contoh fiktif. Ganti dengan identitas kamu sendiri.</p>
+    <form id="profile-form" novalidate>
+      <div class="field">
+        <label for="p-nama">Nama <span class="req">*</span></label>
+        <input type="text" id="p-nama" maxlength="80">
+        <p class="err" id="pe-nama"></p>
+      </div>
+      <div class="field">
+        <label for="p-kelas">Kelas <span class="req">*</span></label>
+        <input type="text" id="p-kelas" maxlength="30">
+        <p class="err" id="pe-kelas"></p>
+      </div>
+      <div class="field">
+        <label for="p-instansi">Tempat PKL / Instansi <span class="req">*</span></label>
+        <input type="text" id="p-instansi" maxlength="120">
+        <p class="err" id="pe-instansi"></p>
+      </div>
+      <div class="field">
+        <label for="p-pembimbing">Pembimbing <span class="req">*</span></label>
+        <input type="text" id="p-pembimbing" maxlength="80">
+        <p class="err" id="pe-pembimbing"></p>
+      </div>
+      <div class="row2">
+        <div class="field">
+          <label for="p-mulai">Periode Mulai <span class="req">*</span></label>
+          <input type="date" id="p-mulai">
+          <p class="err" id="pe-mulai"></p>
+        </div>
+        <div class="field">
+          <label for="p-selesai">Periode Selesai <span class="req">*</span></label>
+          <input type="date" id="p-selesai">
+          <p class="err" id="pe-selesai"></p>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-outline" id="mp-cancel">Batal</button>
+        <button type="submit" class="btn">Simpan Identitas</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="toasts" id="toasts" aria-live="polite" aria-atomic="false"></div>
+
+<script src="script.js"></script>
+</body>
+</html>
